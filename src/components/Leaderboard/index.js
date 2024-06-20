@@ -1,7 +1,13 @@
 import {useState, useEffect} from 'react'
 import Loader from 'react-loader-spinner'
 
-import {LeaderboardContainer, LoadingViewContainer} from './styledComponents'
+import LeaderboardTable from '../LeaderboardTable'
+
+import {
+  LeaderboardContainer,
+  LoadingViewContainer,
+  ErrorMessage,
+} from './styledComponents'
 
 const apiStatusConstants = {
   initial: 'INITIAL',
@@ -35,18 +41,48 @@ const Leaderboard = () => {
       }
       const response = await fetch(url, options)
       const responseData = await response.json()
+      if (response.ok) {
+        setApiResponse(prevApiResponse => ({
+          ...prevApiResponse,
+          status: apiStatusConstants.success,
+          data: responseData,
+        }))
+      } else {
+        setApiResponse(prevApiResponse => ({
+          ...prevApiResponse,
+          status: apiStatusConstants.failure,
+          errorMsg: responseData.error_msg,
+        }))
+      }
     }
 
     getLeaderboardData()
   }, [])
 
-  const renderFailureView = () => {}
+  const renderFailureView = () => {
+    const {errorMsg} = apiResponse
 
-  const renderSuccessView = () => {}
+    return <ErrorMessage>{errorMsg}</ErrorMessage>
+  }
+
+  const renderSuccessView = () => {
+    const {data} = apiResponse
+    const formatedLeaderboardData = data.leaderboard_data.map(eachUser => ({
+      id: eachUser.id,
+      rank: eachUser.rank,
+      name: eachUser.name,
+      score: eachUser.score,
+      language: eachUser.language,
+      profileImgUrl: eachUser.profile_image_url,
+      timeSpent: eachUser.time_spent,
+    }))
+
+    return <LeaderboardTable leaderboardData={formatedLeaderboardData} />
+  }
 
   const renderLoadingView = () => (
     <LoadingViewContainer>
-      <Loader type="ThreeDots" color="#ffffff" height="50" width="50" />
+      <Loader type='ThreeDots' color='#ffffff' height='50' width='50' />
     </LoadingViewContainer>
   )
 
